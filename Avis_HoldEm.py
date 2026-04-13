@@ -178,6 +178,21 @@ def set_status(message: str, kind: str = "info") -> None:
     st.session_state.message_type = kind
 
 
+def funded_seat_indices() -> list[int]:
+    return [i for i, seat in enumerate(st.session_state.seats) if safe_int(seat["stack"], 0) > 0]
+
+
+def tournament_chip_total() -> int:
+    return STARTING_STACK * len(st.session_state.seats)
+
+
+def tournament_champion_index() -> int | None:
+    funded = funded_seat_indices()
+    if len(funded) != 1:
+        return None
+    return funded[0]
+
+
 # =========================================================
 # STYLES
 # =========================================================
@@ -1245,7 +1260,7 @@ def deal_new_hand() -> None:
     ensure_state()
     clear_for_new_hand()
 
-    funded = [i for i, seat in enumerate(st.session_state.seats) if safe_int(seat["stack"], 0) > 0]
+    funded = funded_seat_indices()
     if len(funded) < 2:
         set_status("Need at least two funded seats to deal a hand.", "warning")
         return
@@ -1293,13 +1308,16 @@ def showdown() -> None:
 
     best_rank = max(rank for _, rank in rankings)
     winners = [idx for idx, rank in rankings if rank == best_rank]
-    share = st.session_state.pot // len(winners)
+    pot = safe_int(st.session_state.pot, 0)
+    share, remainder = divmod(pot, len(winners))
 
     for seat in st.session_state.seats:
         seat["result"] = ""
 
-    for idx in winners:
-        st.session_state.seats[idx]["stack"] = safe_int(st.session_state.seats[idx]["stack"], 0) + share
+    ordered_winners = sorted(winners)
+    for offset, idx in enumerate(ordered_winners):
+        odd_chip = 1 if offset < remainder else 0
+        st.session_state.seats[idx]["stack"] = safe_int(st.session_state.seats[idx]["stack"], 0) + share + odd_chip
         st.session_state.seats[idx]["result"] = "WIN"
 
     for idx, _ in rankings:
@@ -1736,6 +1754,35 @@ def render_status() -> None:
     )
 
 
+def render_tournament_banner() -> None:
+    champ_idx = tournament_champion_index()
+    if champ_idx is None:
+        st.session_state["champ_celebrated"] = False
+        return
+
+    champion = st.session_state.seats[champ_idx]
+    chips = safe_int(champion["stack"], 0)
+    total = tournament_chip_total()
+    complete = chips == total
+    tone = "success" if bool(champion["is_human"]) and complete else "warning"
+    status = "TOURNAMENT CHAMPION" if complete else "CHIP LEADER"
+    subtitle = "clean sweep, every chip on the table." if complete else "closeout pending — chips are missing from earlier split pots."
+
+    st.markdown(
+        join_html(
+            "<div class='status ", tone, "'>",
+            f"🏆 {champion['name']} — {status} ({money(chips)} / {money(total)})",
+            "</div>",
+            f"<div class='tiny-meta'>{subtitle}</div>",
+        ),
+        unsafe_allow_html=True,
+    )
+
+    if bool(champion["is_human"]) and complete and not bool(st.session_state.get("champ_celebrated", False)):
+        st.balloons()
+        st.session_state["champ_celebrated"] = True
+
+
 def render_header_metrics() -> None:
     player = st.session_state.seats[player_index()]
     st.markdown(
@@ -1907,6 +1954,7 @@ with top_left:
         "<div class='hero-subtitle'>Round-table poker with real blinds, live stacks, per-seat chips, and proper turn order.</div>",
         unsafe_allow_html=True,
     )
+    render_tournament_banner()
     render_status()
 
 with top_right:
