@@ -1902,6 +1902,7 @@ top_left, top_right = st.columns([1.32, 2.68], gap="small")
 with top_left:
     st.markdown("<div class='hero-eyebrow'>Compliance Casino</div>", unsafe_allow_html=True)
     st.markdown("<div class='hero-title'>AVI'S TEXAS HOLD’EM</div>", unsafe_allow_html=True)
+    st.image("avi.png", width=120)  # ✅ Dealer avatar added (perfect header position)
     st.markdown(
         "<div class='hero-subtitle'>Round-table poker with real blinds, live stacks, per-seat chips, and proper turn order.</div>",
         unsafe_allow_html=True,
