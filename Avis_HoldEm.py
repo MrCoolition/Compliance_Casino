@@ -37,11 +37,11 @@ LOG_LIMIT: Final[int] = 24
 MIN_DECK_REFRESH: Final[int] = 20
 
 NPC_NAME_POOL: Final[tuple[str, ...]] = (
-    "Rico",
-    "Vera",
-    "Jett",
-    "Nova",
-    "Mack",
+    "Coach Kev",
+    "Tej",
+    "Caleb",
+    "Ryan",
+    "Chris",
 )
 
 NPC_STYLE_POOL: Final[tuple[str, ...]] = (
