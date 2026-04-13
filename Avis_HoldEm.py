@@ -37,11 +37,11 @@ LOG_LIMIT: Final[int] = 24
 MIN_DECK_REFRESH: Final[int] = 20
 
 NPC_NAME_POOL: Final[tuple[str, ...]] = (
-    "Coach Kev",
-    "Tej",
-    "Caleb",
-    "Chris",
-    "Ryan",
+    "Rico",
+    "Vera",
+    "Jett",
+    "Nova",
+    "Mack",
 )
 
 NPC_STYLE_POOL: Final[tuple[str, ...]] = (
@@ -1345,7 +1345,16 @@ def advance_street() -> None:
 
 def maybe_finish_betting_round() -> bool:
     live = live_seat_indices()
-    if len(live) <= 1:
+
+    if len(live) == 0:
+        st.session_state.pot = 0
+        st.session_state.phase = "settled"
+        st.session_state.showdown_revealed = True
+        st.session_state.hand_result = "Hand ended."
+        set_status("Hand ended.", "info")
+        return True
+
+    if len(live) == 1:
         idx = live[0]
         seat = st.session_state.seats[idx]
         seat["stack"] = safe_int(seat["stack"], 0) + st.session_state.pot
@@ -1354,10 +1363,12 @@ def maybe_finish_betting_round() -> bool:
         st.session_state.pot = 0
         st.session_state.phase = "settled"
         st.session_state.showdown_revealed = True
+
         if bool(seat["is_human"]):
             set_status("Everybody folded. Pot is yours.", "success")
         else:
             set_status(f"{seat['name']} takes it uncontested.", "error")
+
         push_log(f"{seat['name']} wins uncontested.")
         return True
 
@@ -1433,7 +1444,16 @@ def player_check() -> None:
     move_to_next_actor()
     run_npc_actions()
 
+def effective_raise_amount() -> int:
+    seat = st.session_state.seats[player_index()]
+    remaining = max(0, safe_int(seat["stack"], 0))
+    raw_value = safe_int(st.session_state.get("raise_amount", DEFAULT_RAISE), DEFAULT_RAISE)
 
+    if remaining <= 0:
+        return 0
+
+    return min(max(BIG_BLIND, raw_value), remaining)
+    
 def player_call() -> None:
     if not can_call():
         return
@@ -1450,33 +1470,54 @@ def player_raise() -> None:
     if not can_raise():
         return
 
-    seat = st.session_state.seats[player_index()]
+    idx = player_index()
+    seat = st.session_state.seats[idx]
+    to_call = player_to_call()
     raise_size = effective_raise_amount()
-    commit = apply_bet(player_index(), player_to_call() + raise_size)
 
-    st.session_state.current_bet = max(st.session_state.current_bet, safe_int(seat["street_bet"], 0))
+    if raise_size <= 0:
+        set_status("No chips available for that raise.", "warning")
+        return
+
+    apply_bet(idx, to_call + raise_size)
+
+    st.session_state.current_bet = max(
+        safe_int(st.session_state.current_bet, 0),
+        safe_int(seat["street_bet"], 0),
+    )
+
     for i, other in enumerate(st.session_state.seats):
-        if i != player_index() and seat_can_act(i):
+        if i != idx and seat_can_act(i):
             other["acted"] = False
 
     seat["acted"] = True
     seat["last_action"] = f"Raise to {money(seat['street_bet'])}"
     push_log(f"You raise to {money(seat['street_bet'])}.")
-    move_to_next_actor()
+
+    if maybe_finish_betting_round():
+        return
+
+    st.session_state.current_actor = next_active_index(idx)
     run_npc_actions()
+
 
 
 def player_fold() -> None:
     if not can_fold():
         return
-    seat = st.session_state.seats[player_index()]
+
+    idx = player_index()
+    seat = st.session_state.seats[idx]
     seat["folded"] = True
     seat["acted"] = True
     seat["last_action"] = "Fold"
     push_log("You fold.")
-    maybe_finish_betting_round()
-    if st.session_state.phase == "action":
-        run_npc_actions()
+
+    if maybe_finish_betting_round():
+        return
+
+    st.session_state.current_actor = next_active_index(idx)
+    run_npc_actions()
 
 
 # =========================================================
