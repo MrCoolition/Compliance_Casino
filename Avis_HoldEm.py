@@ -1269,9 +1269,14 @@ def deal_new_hand() -> None:
         st.session_state.deck = fresh_deck()
 
     st.session_state.round_counter += 1
-    st.session_state.dealer_button = next_active_index(st.session_state.dealer_button - 1)
-    st.session_state.small_blind_index = next_active_index(st.session_state.dealer_button)
-    st.session_state.big_blind_index = next_active_index(st.session_state.small_blind_index)
+    st.session_state.dealer_button = next_active_index(st.session_state.dealer_button)
+
+    if len(funded) == 2:
+        st.session_state.small_blind_index = st.session_state.dealer_button
+        st.session_state.big_blind_index = next_active_index(st.session_state.dealer_button)
+    else:
+        st.session_state.small_blind_index = next_active_index(st.session_state.dealer_button)
+        st.session_state.big_blind_index = next_active_index(st.session_state.small_blind_index)
 
     post_blind(st.session_state.small_blind_index, SMALL_BLIND, "SB")
     post_blind(st.session_state.big_blind_index, BIG_BLIND, "BB")
@@ -1657,9 +1662,9 @@ def seat_badge(index: int, seat: Seat) -> tuple[str, str]:
     base = []
     if index == st.session_state.dealer_button:
         base.append("D")
-    if index == st.session_state.small_blind_index and st.session_state.phase != "setup":
+    if index == st.session_state.small_blind_index:
         base.append("SB")
-    if index == st.session_state.big_blind_index and st.session_state.phase != "setup":
+    if index == st.session_state.big_blind_index:
         base.append("BB")
 
     if st.session_state.phase == "settled":
