@@ -1278,7 +1278,14 @@ def deal_new_hand() -> None:
         st.session_state.deck = fresh_deck()
 
     st.session_state.round_counter += 1
-    st.session_state.dealer_button = next_active_index(st.session_state.dealer_button)
+
+    # Keep the configured dealer seat for the very first hand.
+    # After that, rotate once per completed hand.
+    if st.session_state.round_counter == 1:
+        if not seat_can_act(st.session_state.dealer_button):
+            st.session_state.dealer_button = next_active_index(st.session_state.dealer_button)
+    else:
+        st.session_state.dealer_button = next_active_index(st.session_state.dealer_button)
 
     if len(funded) == 2:
         st.session_state.small_blind_index = st.session_state.dealer_button
