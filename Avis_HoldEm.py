@@ -1618,8 +1618,12 @@ def npc_raise_decision(seat: Seat, to_call: int) -> int:
 
 
 def run_npc_actions() -> None:
-    while st.session_state.phase == "action" and st.session_state.current_actor != player_index():
+    while st.session_state.phase == "action":
         idx = st.session_state.current_actor
+
+        if idx == player_index() and seat_can_act(idx):
+            break
+
         seat = st.session_state.seats[idx]
 
         if not seat_can_act(idx):
@@ -2014,6 +2018,6 @@ with main_right:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-if st.session_state.phase == "action" and st.session_state.current_actor != player_index():
+if st.session_state.phase == "action":
     run_npc_actions()
     st.rerun()
