@@ -183,7 +183,10 @@ def funded_seat_indices() -> list[int]:
 
 
 def tournament_chip_total() -> int:
-    return STARTING_STACK * len(st.session_state.seats)
+    seat_stacks = sum(max(0, safe_int(seat.get("stack", 0), 0)) for seat in st.session_state.seats)
+    street_bets = sum(max(0, safe_int(seat.get("street_bet", 0), 0)) for seat in st.session_state.seats)
+    pot = max(0, safe_int(st.session_state.get("pot", 0), 0))
+    return seat_stacks + street_bets + pot
 
 
 def tournament_champion_index() -> int | None:
