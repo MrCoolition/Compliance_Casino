@@ -42,9 +42,9 @@ NPC_NAME_POOL: Final[tuple[str, ...]] = (
     "Caleb",
     "Ryan",
     "Chris",
-    "Nia",
-    "Jordan",
-    "Avery",
+    "Cousin Alex",
+    "Avinash",
+    "George",
 )
 
 NPC_STYLE_POOL: Final[tuple[str, ...]] = (
@@ -53,7 +53,7 @@ NPC_STYLE_POOL: Final[tuple[str, ...]] = (
     "loose",
     "aggressive",
     "balanced",
-    "tight",
+    "balanced",
     "loose",
     "aggressive",
 )
