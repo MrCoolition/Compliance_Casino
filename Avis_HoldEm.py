@@ -31,7 +31,7 @@ STARTING_STACK: Final[int] = 2000
 SMALL_BLIND: Final[int] = 10
 BIG_BLIND: Final[int] = 20
 DEFAULT_RAISE: Final[int] = 40
-MAX_SEATS: Final[int] = 6
+MAX_SEATS: Final[int] = 8
 MIN_SEATS: Final[int] = 2
 LOG_LIMIT: Final[int] = 24
 MIN_DECK_REFRESH: Final[int] = 20
@@ -42,6 +42,9 @@ NPC_NAME_POOL: Final[tuple[str, ...]] = (
     "Caleb",
     "Ryan",
     "Chris",
+    "Nia",
+    "Jordan",
+    "Avery",
 )
 
 NPC_STYLE_POOL: Final[tuple[str, ...]] = (
@@ -50,6 +53,9 @@ NPC_STYLE_POOL: Final[tuple[str, ...]] = (
     "loose",
     "aggressive",
     "balanced",
+    "tight",
+    "loose",
+    "aggressive",
 )
 
 HAND_NAMES: Final[dict[int, str]] = {
@@ -1044,7 +1050,7 @@ def make_seat(name: str, is_human: bool, style: str = "balanced") -> Seat:
 def default_seats(player_count: int) -> list[Seat]:
     seats: list[Seat] = [make_seat("You", True, "human")]
     for i in range(player_count - 1):
-        seats.append(make_seat(NPC_NAME_POOL[i], False, NPC_STYLE_POOL[i]))
+        seats.append(make_seat(NPC_NAME_POOL[i % len(NPC_NAME_POOL)], False, NPC_STYLE_POOL[i % len(NPC_STYLE_POOL)]))
     return seats
 
 
