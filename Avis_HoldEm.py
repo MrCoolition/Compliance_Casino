@@ -1617,7 +1617,8 @@ def npc_raise_decision(seat: Seat, to_call: int) -> int:
     return 0
 
 
-def run_npc_actions() -> None:
+def run_npc_actions() -> bool:
+    acted = False
     while st.session_state.phase == "action":
         idx = st.session_state.current_actor
 
@@ -1627,6 +1628,7 @@ def run_npc_actions() -> None:
         seat = st.session_state.seats[idx]
 
         if not seat_can_act(idx):
+            acted = True
             move_to_next_actor()
             continue
 
@@ -1637,6 +1639,7 @@ def run_npc_actions() -> None:
             seat["acted"] = True
             seat["last_action"] = "Fold"
             push_log(f"{seat['name']} folds.")
+            acted = True
             if maybe_finish_betting_round():
                 break
             st.session_state.current_actor = next_active_index(idx)
@@ -1652,6 +1655,7 @@ def run_npc_actions() -> None:
             seat["acted"] = True
             seat["last_action"] = f"Raise to {money(seat['street_bet'])}"
             push_log(f"{seat['name']} raises to {money(seat['street_bet'])}.")
+            acted = True
             st.session_state.current_actor = next_active_index(idx)
             continue
 
@@ -1660,12 +1664,15 @@ def run_npc_actions() -> None:
             seat["acted"] = True
             seat["last_action"] = f"Call {money(commit)}"
             push_log(f"{seat['name']} calls {money(commit)}.")
+            acted = True
         else:
             seat["acted"] = True
             seat["last_action"] = "Check"
             push_log(f"{seat['name']} checks.")
+            acted = True
 
         move_to_next_actor()
+    return acted
 
 
 # =========================================================
@@ -2018,6 +2025,5 @@ with main_right:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-if st.session_state.phase == "action":
-    run_npc_actions()
+if st.session_state.phase == "action" and run_npc_actions():
     st.rerun()
